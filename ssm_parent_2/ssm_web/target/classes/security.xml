@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:security="http://www.springframework.org/schema/security"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+    http://www.springframework.org/schema/beans/spring-beans.xsd          
+    http://www.springframework.org/schema/security          
+    http://www.springframework.org/schema/security/spring-security.xsd">
+
+
+    <!--放行不需要拦截的资源页面-->
+    <security:http pattern="/login.jsp" security="none"></security:http>
+    <security:http pattern="/failer.jsp" security="none"></security:http>
+    <security:http pattern="/css/**" security="none"></security:http>
+    <security:http pattern="/img/**" security="none"></security:http>
+    <security:http pattern="/pages/**" security="none"></security:http>
+    <security:http pattern="/plugins/**" security="none"></security:http>
+
+    <!--配置拦截的规则和放行的条件
+    auto-config 支持默认的配置
+    use-expression 使用表达式 为false 关闭表达式
+    intercept-url  拦截的资源规则
+    access  允许访问的角色条件
+    -->
+    <security:http auto-config="true" use-expressions="true">
+        <!--多个角色之间是或者的关系 任意角色即可登录
+        ROLE_zhang,ROLE_zhu,ROLE_shen,ROLE_didi-->
+        <security:intercept-url pattern="/**" access="hasAnyRole('ROLE_zhang','ROLE_zhu','ROLE_shen','ROLE_didi')"></security:intercept-url>
+        <!--
+        login-page  自定义登录页面
+        login-processing-url 登录页面form表单请求的url地址
+        default-target-url  登录成功目标页面
+        authentication-failure-url 登录失败的页面-->
+        <security:form-login login-page="/login.jsp"
+                             login-processing-url="/login"
+                             default-target-url="/index.jsp"
+                             authentication-failure-url="/failer.jsp"></security:form-login>
+        <!--配置登录成功权限不足的处理-->
+        <security:access-denied-handler error-page="/403.jsp"></security:access-denied-handler>
+        <!--关闭跨域请求的拦截-->
+        <security:csrf disabled="true"></security:csrf>
+
+        <!--配置退出的过滤器
+		invalidate-session="true" session过期
+		logout-success-url  退出成功的跳转页
+		logout-url  页面发起退出请求的路径
+		-->
+        <security:logout invalidate-session="true"
+                         logout-success-url="/login.jsp"
+                         logout-url="/logout"></security:logout>
+
+
+    </security:http>
+
+    <!--配置拦截访问的验证-->
+    <security:authentication-manager>
+        <security:authentication-provider user-service-ref="userService">
+            <!--配置加密验证的方式
+             <security:password-encoder hash="bcrypt"></security:password-encoder>
+            -->
+            <security:password-encoder ref="pwdEncoder"></security:password-encoder>
+
+        </security:authentication-provider>
+
+    </security:authentication-manager>
+
+    <!--配置加密工具类的bean对象-->
+    <bean id="pwdEncoder" class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder"></bean>
+
+</beans>
